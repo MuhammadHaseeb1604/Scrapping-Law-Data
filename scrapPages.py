@@ -67,7 +67,7 @@ async def saveMarkdownFile(filename, markdown_content):
 
 async def main():
     async with async_playwright() as p:
-        browser = await p.firefox.launch(headless=True)
+        browser = await p.firefox.launch(headless=False)
         page = await browser.new_page()
 
         with open("urls.txt", "r", encoding="utf-8") as f:
