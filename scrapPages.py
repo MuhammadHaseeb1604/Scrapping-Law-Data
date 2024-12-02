@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import aiofiles
 from tqdm.asyncio import tqdm
 from playwright.async_api import async_playwright
@@ -8,6 +9,10 @@ from markdownify import markdownify as md
 BASE_DIR = "Data_Eng_test"
 LANGUAGE = "en"
 BASE_QUERY_SELECTOR = "div.card.legislation-card.mb-base div.card-body"
+TITLE_REGEX = r"[^\w\s\-_]"
+
+def sanitize_name(title):
+    return re.sub(TITLE_REGEX, '', title).strip()
 
 async def scrapPageData(url, page):
     try:
@@ -67,7 +72,7 @@ async def saveMarkdownFile(filename, markdown_content):
 
 async def main():
     async with async_playwright() as p:
-        browser = await p.firefox.launch(headless=False)
+        browser = await p.firefox.launch(headless=True)
         page = await browser.new_page()
 
         with open("urls.txt", "r", encoding="utf-8") as f:
@@ -88,7 +93,10 @@ async def main():
             markdown_content, title, failed_url = await scrapPageData(url, page)
             
             if markdown_content is not None:
-                await saveMarkdownFile(f"{BASE_DIR}/{title}.md", markdown_content)
+                title = sanitize_name(title)
+                filename = f"{BASE_DIR}/{title}.md"
+                print(filename)
+                await saveMarkdownFile(filename, markdown_content)
                 success_count += 1
             else:
                 failed_urls.append(failed_url)
